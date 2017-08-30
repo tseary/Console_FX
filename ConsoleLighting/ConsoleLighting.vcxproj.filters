@@ -18,10 +18,10 @@
     <None Include="ConsoleLighting.ino" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="__vm\.ConsoleLighting.vsarduino.h">
+    <ClInclude Include="LightDriver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LightDriver.h">
+    <ClInclude Include="__vm\.ConsoleLighting.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

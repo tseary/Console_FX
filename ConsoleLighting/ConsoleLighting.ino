@@ -1,34 +1,44 @@
 
-#include <Arduino.h>
 #include <stdint.h>
 #include "LightDriver.h"
 
-const char* FIRMWARE_VERSION = "Console Lighting v1.0 (compiled" __TIMESTAMP__ ")";
+const char* FIRMWARE_VERSION = "Console Lighting v1.0 (compiled " __TIMESTAMP__ ")";
 
 // Serial control chars
 const char CMD_START_CHAR = '$',
 	CMD_TERMINATOR_CHAR = '\n';
 
-const uint8_t RX_BUFFER_SIZE = 20;
-char rxBuffer[RX_BUFFER_SIZE];	// Not null-terminated
+const uint8_t RX_BUFFER_SIZE = 20;	// The maximum size of a message to be parsed
+char rxBuffer[RX_BUFFER_SIZE];		// Not null-terminated
 volatile uint8_t rxBufferIndex = 0;	// The next empty space in the rx buffer
-volatile bool parseRequest = true;
+volatile bool parseRequest = false;
 
-LightDriver *driver;
+LightDriver *lightDriver;
 
 void setup() {
-	driver = new LightDriver(64);
-
+	// Open the serial port
 	Serial.begin(115200);
-	//while (!Serial);
+	while (!Serial);	// Wait for connection on boards that support it
 
 	// Print start message
 	Serial.println(FIRMWARE_VERSION);
+
+	// Create light driver
+	const uint8_t BOARDS = 2;
+	lightDriver = new LightDriver(32 * BOARDS);
+
+	// Lamp test
+	// TODO Maybe do this sequentially to reduce load
+	lightDriver->setAllLightModes(LIGHT_MODE_ON);
+	lightDriver->updateOutputs();
+	delay(1000);
+	lightDriver->setAllLightModes(LIGHT_MODE_OFF);
+	lightDriver->updateOutputs();
 }
 
 void loop() {
 	parseCommand();
-	driver->updateOutputs();
+	lightDriver->updateOutputs();
 }
 
 void parseCommand() {
@@ -46,6 +56,11 @@ void parseCommand() {
 	// TODO Parse
 
 	// Clear the request
+	clearParseRequest();
+}
+
+void clearParseRequest() {
+	rxBufferIndex = 0;
 	parseRequest = false;
 }
 
@@ -60,7 +75,9 @@ void serialEvent() {
 	while (Serial.available()) {
 		// Check that there is enough space in the buffer
 		if (rxBufferIndex >= RX_BUFFER_SIZE) {
-			// ERROR Buffer overflow
+			Serial.println("ERROR: rx buffer overflow");
+			rxBufferIndex = 0;	// Empty the buffer
+			return;
 		}
 		
 		// Read a char from the port
