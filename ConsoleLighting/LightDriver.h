@@ -23,6 +23,16 @@ public:
 		delete[] _lightOutputs;
 	}
 
+	void updateOutputs() {
+		// Determine whether each light source is currently on or off
+		uint32_t nowMillis = millis();
+		bool blinkFastOn = (nowMillis % _blinkFastPeriod) < (_blinkFastPeriod / 2);
+		bool blinkSlowOn = (nowMillis % _blinkSlowPeriod) < (_blinkSlowPeriod / 2);
+
+		// TODO For each light, set or clear a bit in _lightOutputs
+		// TODO Shift out _lightOutputs (only if something changed)
+	}
+
 protected:
 	uint8_t _lightChannels;		// The number of outputs connected
 	LightSource *_lightSources;	// The function each light is performing
@@ -35,14 +45,4 @@ protected:
 	uint16_t
 		_blinkFastPeriod = 333,
 		_blinkSlowPeriod = 1000;
-
-	void updateOutputs() {
-		// Determine whether each light source is currently on or off
-		uint32_t nowMillis = millis();
-		bool blinkFastOn = (nowMillis % _blinkFastPeriod) < (_blinkFastPeriod / 2);
-		bool blinkSlowOn = (nowMillis % _blinkSlowPeriod) < (_blinkSlowPeriod / 2);
-
-		// TODO For each light, set or clear a bit in _lightOutputs
-		// TODO Shift out _lightOutputs (only if something changed)
-	}
 };
