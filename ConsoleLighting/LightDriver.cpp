@@ -3,9 +3,7 @@
 
 void LightDriver::reset() {
 	// Clear the shift register
-	digitalWrite(_shiftRegClearPin, LOW);
-	delay(1);
-	digitalWrite(_shiftRegClearPin, HIGH);
+	clearShiftRegister();
 
 	// Clear the output register
 	loadOutputRegister();
@@ -16,7 +14,7 @@ void LightDriver::reset() {
 
 void LightDriver::setLightMode(uint8_t index, LightMode mode) {
 	// Ignore if the index is out of range
-	if (index >= _lightCount) {
+	if (index >= _lightCount || mode >= LightMode_Length) {
 		return;
 	}
 
@@ -50,7 +48,13 @@ void LightDriver::updateOutputs() {
 	uint32_t nowMillis = millis();
 	bool flashFast = (nowMillis % _flashFastPeriod) < (_flashFastPeriod / 2);
 	bool flashSlow = (nowMillis % _flashSlowPeriod) < (_flashSlowPeriod / 2);
-	bool flashFlashDoubleFlash = false;	// TODO
+
+	// TODO Measure canon timing
+	uint32_t ffdfMillis = (nowMillis % 26800);
+	bool flashFlashDoubleFlash = ffdfMillis < 160 ||
+		(ffdfMillis >= 4100 && ffdfMillis < 4260) ||
+		(ffdfMillis >= 9100 && ffdfMillis < 9260) ||
+		(ffdfMillis >= 9440 && ffdfMillis < 9600);
 
 	// Generate outputs[] from lightModes[]
 	uint8_t outputByte = 0;
@@ -113,20 +117,22 @@ void LightDriver::updateOutputs() {
 
 		// Load all data to output register
 		loadOutputRegister();
+
+		// Not necessary, but prevents outputs from being echoed on the status LEDs
+		clearShiftRegister();
 	}
 }
 
 const char* LightDriver::lightModeToString(LightMode lightMode) {
 	switch (lightMode) {
-		default:
 		case LIGHT_MODE_OFF:
 			return "Off";
 		case LIGHT_MODE_ON:
 			return "On";
 		case LIGHT_MODE_FLASH_FAST:
-			return "Flash Fast";
+			return "Fast Flash";
 		case LIGHT_MODE_FLASH_SLOW:
-			return "Flash Slow";
+			return "Slow Flash";
 		case LIGHT_MODE_FLASH_FLASH_DOUBLE_FLASH:
 			return "Flash... Flash... Double Flash";
 	}

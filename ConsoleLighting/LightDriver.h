@@ -4,12 +4,13 @@
 #include <Arduino.h>
 #include <stdint.h>
 
-enum LightMode {
+enum LightMode : uint8_t {
 	LIGHT_MODE_OFF,
 	LIGHT_MODE_ON,
 	LIGHT_MODE_FLASH_FAST,
 	LIGHT_MODE_FLASH_SLOW,
-	LIGHT_MODE_FLASH_FLASH_DOUBLE_FLASH
+	LIGHT_MODE_FLASH_FLASH_DOUBLE_FLASH,
+	LightMode_Length	// The number of valid members of the enum
 };
 
 class LightDriver {
@@ -44,6 +45,10 @@ public:
 	// Does not change light modes that have been set.
 	void reset();
 
+	uint8_t getLightCount() {
+		return _lightCount;
+	}
+
 	// Sets the mode of a single light.
 	void setLightMode(uint8_t index, LightMode mode);
 
@@ -75,6 +80,14 @@ protected:
 	LightMode *_lightModes;	// The function each light is performing
 	uint8_t _lightOutputsLength;
 	uint8_t *_lightOutputs;		// One bit for each light, representing whether the light is currently on or off
+
+	// Low-level functions
+	void clearShiftRegister() {
+		digitalWrite(_shiftRegClearPin, LOW);
+		delay(1);
+		digitalWrite(_shiftRegClearPin, HIGH);
+		digitalWrite(_shiftRegDataPin, LOW);
+	}
 
 	void loadOutputRegister() {
 		digitalWrite(_outputRegClockPin, HIGH);
